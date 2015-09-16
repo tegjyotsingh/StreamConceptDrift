@@ -5,7 +5,7 @@ INITIAL_TRAIN_SIZE=0.2
 
 class DataSet(object):
 
-    def __init__(self, filename, initial_train_size=INITIAL_TRAIN_SIZE):
+    def __init__(self, filename, initial_train_size):
         [X,Y]=data_infra.ReadFromFile(filename)
         [X_train, Y_train, X_test, Y_test]=data_infra.SplitTrainAndTest(X,Y, initial_train_size)
         self.train_set= {'X': X_train, 'Y': Y_train}
@@ -43,6 +43,7 @@ class Stream(object):
     def __init__(self, X, Y, chunk_size=1, slide_rate=None):
         if slide_rate is None:
             slide_rate=chunk_size
+        # defaults to sequential, or chunk based if chunk size is given
         self.size=len(Y)
         self.unlabaled_data=X
         self.true_labels=Y
@@ -54,7 +55,7 @@ class Stream(object):
         self.is_stream_end=False
         self.evaluated_intervals=0
 
-        self.got_chunk_before_evalaution=False
+        self.got_chunk_before_evaluation=False
 
     def _getNextChunk(self):
         start_timestamp=self.current_timestamp+self.slide_rate
@@ -71,17 +72,22 @@ class Stream(object):
 
     def getUnlabaledData(self):
         self._getNextChunk()
-        self.got_chunk_before_evalaution=True
+        self.got_chunk_before_evaluation=True
         return self.current_chunk['X']
 
     def getEvaluationLabels(self):
-        if  self.got_chunk_before_evalaution:
+        if  self.got_chunk_before_evaluation:
             return self.current_chunk['Y']
         else:
             raise Exception('Did not fetch before accessing labels')
 
 
+class InitiallyLabeledDataStream(object):
 
+    def __init__(self, filename, initial_train_size, chunk_size, slide_rate):
+        self.parent_dataset=DataSet(filename, initial_train_size)
+        self.stream=Stream(self.parent_dataset.test_set['X'], self.parent_dataset.test_set['Y'], chunk_size, slide_rate)
+        self.oracle=Oracle(self.parent_dataset.test_set['Y'])
 
 
 
