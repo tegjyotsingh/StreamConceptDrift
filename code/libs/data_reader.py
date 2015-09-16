@@ -1,13 +1,11 @@
 import data_infra
 
 # File which provides data reading and streaming capabilities
-INITIAL_TRAIN_SIZE=0.2
-
 class DataSet(object):
 
     def __init__(self, filename, initial_train_size):
-        [X,Y]=data_infra.ReadFromFile(filename)
-        [X_train, Y_train, X_test, Y_test]=data_infra.SplitTrainAndTest(X,Y, initial_train_size)
+        [X,Y]= data_infra.ReadFromFile(filename)
+        [X_train, Y_train, X_test, Y_test]= data_infra.SplitTrainAndTest(X,Y, initial_train_size)
         self.train_set= {'X': X_train, 'Y': Y_train}
         self.test_set= {'X': X_test, 'Y': Y_test}
         self.data_describe={
@@ -25,18 +23,6 @@ class DataSet(object):
         print 'Description of Dataset'
         for key, value in self.data_describe.items():
             print key, value
-
-class Oracle(object):
-    def __init__(self,Y):
-        self.ground_truth=Y
-        self.expenditure=0
-
-    def getTrueLabelEvaluation(self,id):
-        return self.ground_truth[id]
-
-    def getTrueLabel(self,id, cost=1):
-        expenditure+=cost
-        return self.ground_truth[id]
 
 class Stream(object):
 
@@ -85,9 +71,14 @@ class Stream(object):
 class InitiallyLabeledDataStream(object):
 
     def __init__(self, filename, initial_train_size, chunk_size, slide_rate):
+        # For sequential access, chunk_size=1, sliding rate=chunk_size
+        # For chunk access, chunk_size=n, sliding_Rate=chunk_size
+        # For sliding window, chunk_size=n, sliding rate= m
         self.parent_dataset=DataSet(filename, initial_train_size)
         self.stream=Stream(self.parent_dataset.test_set['X'], self.parent_dataset.test_set['Y'], chunk_size, slide_rate)
-        self.oracle=Oracle(self.parent_dataset.test_set['Y'])
+        self.initial_labaled_set={'X':self.parent_dataset.train_set['X'], 'Y': self.parent_dataset.train_set['Y']}
+
+
 
 
 

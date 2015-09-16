@@ -41,7 +41,7 @@ def PredictModel(model, X_test, Y_test=None):
 
 
 def TestPipeline():
-    FILE = '../data/rh'
+    FILE = '../../data/rh'
     EVALUATION_METRIC = 'ACCURACY'
     TRAIN_RATIO = 0.25
 

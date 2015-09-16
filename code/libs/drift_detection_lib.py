@@ -1,7 +1,9 @@
 # Library for drift detection methdologies
 
 import abc
+
 import data_infra
+
 
 class DriftDetector(object):
     __metaclass__ = abc.ABCMeta
@@ -86,7 +88,7 @@ def TestSimpleAccuracyDriftDetector():
     sdd=SimpleAccuracyDriftDetector(Parameters=Parameters, ReferenceState=ReferenceState)
 
     for i,sample in enumerate(X_test):
-        predicted_label=data_infra.PredictModel(model, sample)
+        predicted_label= data_infra.PredictModel(model, sample)
         actual_label= Y_test[i]
         isdrift=sdd.CheckForDrift(predicted_label, actual_label)
         if isdrift != -1:
@@ -96,7 +98,7 @@ def TestSimpleAccuracyDriftDetector():
             else:
                 X_train=X_test[i-RetrianDrain,i]
                 Y_train= Y_test[i-RetrainDrain,i]
-                model=data_infra.TrainModel(X_train, Y_train)
+                model= data_infra.TrainModel(X_train, Y_train)
                 performance = data_infra.ComputePerf(data_infra.PredictModel(model, X_train), Y_train)
                 ref_accuracy= performance['metric']
                 sdd.SetReferenceState(ref_accuracy)
