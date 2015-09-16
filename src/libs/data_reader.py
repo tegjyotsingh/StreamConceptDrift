@@ -36,7 +36,7 @@ class Stream(object):
         self.chunk_size=chunk_size
         self.slide_rate=slide_rate
 
-        self.current_timestamp=-self.chunk_size
+        self.current_timestamp=-self.slide_rate
         self.current_chunk=None
         self.is_stream_end=False
         self.evaluated_intervals=0
@@ -45,9 +45,9 @@ class Stream(object):
 
     def _getNextChunk(self):
         start_timestamp=self.current_timestamp+self.slide_rate
-        end_timestamp=start_timestamp+chunk_size
-        if self.end_timestamp> self.size:
-            self.end_timestamp=self.size
+        end_timestamp=start_timestamp+self.chunk_size
+        if end_timestamp>= self.size:
+            end_timestamp=self.size
             self.is_stream_end=True
         self.current_chunk= \
             { 'X': self.unlabaled_data[start_timestamp:end_timestamp],
@@ -76,7 +76,7 @@ class InitiallyLabeledDataStream(object):
         # For sliding window, chunk_size=n, sliding rate= m
         self.parent_dataset=DataSet(filename, initial_train_size)
         self.stream=Stream(self.parent_dataset.test_set['X'], self.parent_dataset.test_set['Y'], chunk_size, slide_rate)
-        self.initial_labaled_set={'X':self.parent_dataset.train_set['X'], 'Y': self.parent_dataset.train_set['Y']}
+        self.initial_labeled_set={'X':self.parent_dataset.train_set['X'], 'Y': self.parent_dataset.train_set['Y']}
 
 
 

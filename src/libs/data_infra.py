@@ -24,6 +24,8 @@ def SplitTrainAndTest(X, Y, train_ratio):
 def TrainModel(X, Y, model_type='SVM_LINEAR'):
     if model_type == 'SVM_LINEAR':
         model = svm.SVC(kernel='linear')
+    else:
+        raise Exception('Invalid Model')
     model.fit(X, Y)
     return model
 
@@ -35,7 +37,7 @@ def ComputePerf(Y_actual, Y_pred, metric = 'ACCURACY'):
     return {'metric': metric, 'metric_measure': metric_measure, 'conf_matrix': conf_matrix}
 
 
-def PredictModel(model, X_test, Y_test=None):
+def PredictModel(model, X_test):
     Y_pred = model.predict(X_test)
     return Y_pred
 
