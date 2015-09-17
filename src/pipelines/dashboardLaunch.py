@@ -2,7 +2,6 @@ __author__ = 'tegjyot'
 
 import pprint
 
-
 from src.libs import global_constants
 from src.pipelines import feedback_loop_pipeline
 
@@ -15,21 +14,19 @@ def DashboardLaunch():
     parameters['ilds']={
         'filename': '../../data/rh',
         'initial_train_size': 0.25,
-        'chunk_size': 2000,
-        'slide_rate': 200
+        'chunk_size': 1,
+        'slide_rate': 1
     }
 
     parameters['drift_detector']={}
-    parameters['drift_detector']['method']= global_constants.DRIFT_DETECTION_METHODS[1]
-    parameters['drift_detector']['parameters']={
-        'DROP_IN_ACCURACY': 0.1,
-        'MIN_SAMPLES': 2000
-    }
-    parameters['train_module']=feedback_loop_pipeline.retrain_module_ref_accuracy
+    parameters['drift_detector']['method']= global_constants.DRIFT_DETECTION_METHODS[2]
+    parameters['drift_detector']['parameters']=global_constants.DRIFT_PARAMETERS[parameters['drift_detector']['method']]['parameters']
+    parameters['drift_detector']['retrain_examples']=500
+    parameters['train_module']=global_constants.DRIFT_PARAMETERS[parameters['drift_detector']['method']]['retrain_module']
 
     parameters['evaluation']={}
-    parameters['evaluation']['attributes_to_track']=['drift', 'performance', 'performance_new'] # defaults to performance and drift
-    parameters['evaluation']['display_metrics']=None# None if all attributes are to be tracked ['drift', 'performance']
+    parameters['evaluation']['attributes_to_track']=['drift', 'performance', 'performance_new', 'performance_sofar'] # defaults to performance and drift
+    parameters['evaluation']['display_metrics']=['drift', 'performance_sofar']# None if all attributes are to be tracked ['drift', 'performance_new']
     parameters['intermediate']=\
         {'print_counter': 100}
 

@@ -2,7 +2,8 @@ __author__ = 'tegjyot'
 
 import numpy as np
 import matplotlib.pyplot as plt
-from src.libs import global_constants
+
+from src.libs import global_constants as constants
 
 # keeps track of drift and performance statistics
 class Evaluation(object):
@@ -15,7 +16,6 @@ class Evaluation(object):
         self.running_performance={}
         for metric in attributes_to_track:
             self.running_performance[metric]=[]
-
 
     def addRunningResults(self,**kwargs):
         # need to provide the attributes to track values as kwargs
@@ -50,11 +50,10 @@ class Evaluation(object):
         legend=[]
         for i,metric in enumerate(display_metrics):
             if metric is 'drift' and self.returnNumberDrifts()!=0:
-                [plt.axvline(x,color=global_constants.COLORS[i]) for (x,val) in enumerate(self.running_performance['drift']) if val==1]
+                [plt.axvline(x,color=constants.COLORS[i]) for (x,val) in enumerate(self.running_performance['drift']) if val==1]
             else:
-                plt.plot(X,self.running_performance[metric],color=global_constants.COLORS[i])
+                plt.plot(X,self.running_performance[metric],color=constants.COLORS[i])
             legend.append(metric)
-            print i, metric
         plt.legend(legend)
         plt.xlabel('Time')
         plt.show()
