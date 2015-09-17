@@ -15,19 +15,21 @@ def DashboardLaunch():
     parameters['ilds']={
         'filename': '../../data/rh',
         'initial_train_size': 0.25,
-        'chunk_size': 100,
-        'slide_rate': 100
+        'chunk_size': 2000,
+        'slide_rate': 200
     }
 
     parameters['drift_detector']={}
     parameters['drift_detector']['method']= global_constants.DRIFT_DETECTION_METHODS[1]
     parameters['drift_detector']['parameters']={
-        'DROP_IN_ACCURACY': 0.01,
-        'MIN_SAMPLES': 1000
+        'DROP_IN_ACCURACY': 0.1,
+        'MIN_SAMPLES': 2000
     }
     parameters['train_module']=feedback_loop_pipeline.retrain_module_ref_accuracy
 
-    parameters['evaluation']=None # defaults to performance and drift
+    parameters['evaluation']={}
+    parameters['evaluation']['attributes_to_track']=['drift', 'performance', 'performance_new'] # defaults to performance and drift
+    parameters['evaluation']['display_metrics']=None# None if all attributes are to be tracked ['drift', 'performance']
     parameters['intermediate']=\
         {'print_counter': 100}
 

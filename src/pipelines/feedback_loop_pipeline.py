@@ -47,16 +47,21 @@ class Pipeline(object):
 
             if len(X) == 0: # last chunk might not receive data so dont compute anything
                 break
-
             Y_pred=data_infra.PredictModel(self.model, X)
             Y_actual=self.ilds.stream.getEvaluationLabels()
-            self.evaluation_engine.addRunningResults(performance=data_infra.ComputePerf(Y_actual,
-                                                        Y_pred, self.parameters['metric'])['metric_measure'])
+
+            self.evaluation_engine.addRunningResults(performance=data_infra.ComputePerf(Y_actual,Y_pred
+                                                                                            ,self.parameters['metric'])['metric_measure'])
+            #evaluating only on newly occuring samples
+            self.evaluation_engine.addRunningResults(performance_new=data_infra.ComputePerf(Y_actual[-self.parameters['ilds']['slide_rate']:]
+                                                                                            ,Y_pred[-self.parameters['ilds']['slide_rate']:]
+                                                                                            ,self.parameters['metric'])['metric_measure'])
 
             # feedback loop
             if self.drift_detector.checkForDrift(predicted_labels=Y_pred, actual_labels=Y_actual) != -1:
                 # retrain -- Basic model retrain using half of current chunk
                 self.evaluation_engine.addRunningResults( drift = 1)
+                # need to buffer and or use active learning for streaming sequential data
                 high_range= self.ilds.stream.current_timestamp+self.parameters['ilds']['chunk_size']
                 low_range=int(high_range-(self.parameters['ilds']['chunk_size']*0.5))
                 Y_oracle= self.oracle.getTrueLabelRange(low_range, high_range)
@@ -68,15 +73,15 @@ class Pipeline(object):
             else:
                 self.evaluation_engine.addRunningResults(drift = 0)
 
-    def printResults(self):
-      print 'Running Results Details'
+    def printResults(self, display_metrics=None):
       pp=pprint.PrettyPrinter()
-      pp.pprint(zip(range(0,len(self.evaluation_engine.running_performance['drift'])),self.evaluation_engine.running_performance['drift'],self.evaluation_engine.running_performance['performance']))
+      print 'Running Results Details'
+      self.evaluation_engine.printSequentialMetrics()
       print 'Aggregated Results'
       pp.pprint(self.evaluation_engine.returnAggregates())
       print 'Number of drifts detected: %d' % self.evaluation_engine.returnNumberDrifts()
       print 'Expenditure by oracle: %d' % self.oracle.expenditure
-      self.evaluation_engine.plotRunningTogether()
+      self.evaluation_engine.plotRunningTogether(display_metrics)
 
 
 def LaunchPipeline(parameters):
@@ -93,7 +98,7 @@ def LaunchPipeline(parameters):
     drift_detector=parameters['drift_detector']['method'](parameters=parameters['drift_detector']['parameters'])
 
     # Evaluation engine
-    evaluation_engine=evaluate.Evaluation(attributes_to_track=parameters['evaluation'])
+    evaluation_engine=evaluate.Evaluation(attributes_to_track=parameters['evaluation']['attributes_to_track'])
 
     # Initial Model
     [model, reference_state]= parameters['train_module'](ilds.initial_labeled_set['X'],ilds.initial_labeled_set['Y'],\
@@ -105,7 +110,7 @@ def LaunchPipeline(parameters):
                     train_module=parameters['train_module'], model =model, parameters=parameters)
 
     pipe.Start()
-    pipe.printResults()
+    pipe.printResults(parameters['evaluation']['display_metrics'])
 
 def TestPipeline():
 
@@ -129,7 +134,9 @@ def TestPipeline():
     }
     parameters['train_module']=retrain_module_ref_accuracy
 
-    parameters['evaluation']=None # defaults to performance and drift
+    parameters['evaluation']={}
+    parameters['evaluation']['attributes_to_track']=['drift', 'performance', 'performance_new'] # defaults to performance and drift
+    parameters['evaluation']['display_metrics']=['drift', 'performance']
     parameters['intermediate']=\
         {'print_counter': 1000}
 
