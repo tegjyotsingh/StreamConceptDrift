@@ -3,7 +3,7 @@ import sklearn.metrics
 import numpy as np
 
 # reads from file and returns X, Y
-def ReadFromFile(filename, type='csv'):
+def ReadFromFile(filename, type='csv', header= False):
     with open(filename) as f:
         data = np.loadtxt(f, delimiter=",")
     X = np.array((data[:, 0:-1]))

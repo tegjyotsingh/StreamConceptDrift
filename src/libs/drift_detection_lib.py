@@ -30,6 +30,12 @@ class NoDrift(DriftDetector):
     def initialize(self, **kwargs):
         pass
 
+    def setReferenceState(self, *args, **kwargs):
+        return -1
+
+    def computeReferenceState(self, *args, **kwargs):
+        return -1
+
     def checkForDrift(self, **kwargs):
         return -1
 
@@ -66,6 +72,13 @@ class SimpleAccuracyDriftDetector(DriftDetector):
             self.setDefaultParameters()
         else:
             self.Parameters=kwargs['parameters'].copy()
+
+    def computeReferenceState(self, **kwargs):
+        # list of Y_actual and Y_pred
+        return data_infra.ComputePerf(kwargs['Y_actual'], kwargs['Y_pred'],
+                                                                   kwargs['metric'])['metric_measure']
+
+
 
     def checkForDrift(self, **kwargs):
         # predicted_labels, actual_labels
