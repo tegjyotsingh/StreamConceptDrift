@@ -61,7 +61,6 @@ class SimpleAccuracyDriftDetector(DriftDetector):
 
     def setReferenceState(self, **kwargs):
         self.ReferenceState={}
-        print kwargs
         if not kwargs:
             kwargs['ref_accuracy']=0.5
         self.ReferenceState['ref_accuracy']=kwargs['ref_accuracy']
@@ -95,7 +94,6 @@ class SimpleAccuracyDriftDetector(DriftDetector):
                 if self.ReferenceState['ref_accuracy']-\
                     (1-float(self.State['cycle_error'])/self.State['samples_processed'])>self.Parameters['DROP_IN_ACCURACY']:
                     # drift detected
-                    self.setDefaultInitializeState()
                     return 'Drift' # position in chunk where drift detected
                 else:
                     self.setDefaultInitializeState()

@@ -24,6 +24,7 @@ class Pipeline(object):
         self.ReferenceState=None
         self.buffer_Y=[]
         self.buffer_X=[]
+        self.IntermediateStoreModel={}
 
     def Start(self):
 
@@ -44,6 +45,7 @@ class Pipeline(object):
 
             if len(X) == 0: # last chunk might not receive data so dont compute anything
                 break
+
             Y_pred=data_infra.PredictModel(self.model, X)
             Y_actual=self.ilds.stream.getEvaluationLabels()
 
@@ -62,6 +64,7 @@ class Pipeline(object):
             #TODO: add intermediate for last drift location
 
             #TODO: add intermediate for forgetting and last window
+            flag_is_drift=False
 
             # feedback loop
             isDrift=self.drift_detector.checkForDrift(predicted_labels=Y_pred, actual_labels=Y_actual)
@@ -69,12 +72,18 @@ class Pipeline(object):
                 self.buffer_X.extend(X)
                 self.buffer_Y.extend(Y_actual)
                 if isDrift=='Drift':
+                    # TODO implement better way of obtianing retrain samples
+
+                    if len(self.buffer_Y)<self.parameters['drift_detector']['retrain_examples']:
+                        self.evaluation_engine.addRunningResults(drift = 0)
+                        continue
+
                     end=min(len(self.buffer_X), self.parameters['drift_detector']['retrain_examples'])
                     X_retrain=self.buffer_X[-1*end:]
                     Y_retrain=self.buffer_Y[-1*end:]
                     self.oracle.expenditure+=len(Y_retrain)
 
-                    self.evaluation_engine.addRunningResults( drift = 1)
+
                     # need to buffer and or use active learning for streaming sequential data
                     # need to extend to work so that samples collected in case we need to add more training
                     #[X_retrain,  Y_oracle]=BufferRetrain()
@@ -83,13 +92,18 @@ class Pipeline(object):
                                                                           self.parameters['model']['model_type'],
                                                                           self.drift_detector, self.parameters['metric'])
                     self.drift_detector.setReferenceState(**reference_state)
-                else:
-                    self.evaluation_engine.addRunningResults(drift = 0)
+                    self.drift_detector.setDefaultInitializeState()
+                    flag_is_drift=True
+                    self.buffer_X=[]
+                    self.buffer_Y=[]
+                    self.IntermediateStoreModel[evaluated_samples]=self.model # TODO make sorted dict
 
+            if flag_is_drift:
+                self.evaluation_engine.addRunningResults(drift = 1)
             else:
                 self.evaluation_engine.addRunningResults(drift = 0)
-                self.buffer_X=[]
-                self.buffer_Y=[]
+
+
 
     def BufferRetrain(self):
         # TODO: can be removed
@@ -108,6 +122,7 @@ class Pipeline(object):
       pp.pprint(self.evaluation_engine.returnAggregates())
       print 'Number of drifts detected: %d' % self.evaluation_engine.returnNumberDrifts()
       print 'Expenditure by oracle: %d' % self.oracle.expenditure
+      print 'Number of intermediate models made %d and time at:%s' %( len(self.IntermediateStoreModel.keys()), self.IntermediateStoreModel.keys())
       self.evaluation_engine.plotRunningTogether(display_metrics)
 
 
@@ -136,8 +151,11 @@ def LaunchPipeline(parameters):
     pipe = Pipeline(ilds=ilds, oracle=oracle, drift_detector=drift_detector, evaluation_engine=evaluation_engine,
                     train_module=parameters['train_module'], model =model, parameters=parameters)
 
+    pipe.IntermediateStoreModel={0:model}
+
     pipe.Start()
     pipe.printResults(parameters['evaluation']['display_metrics'])
+    return pipe.IntermediateStoreModel
 
 def TestPipeline():
 
