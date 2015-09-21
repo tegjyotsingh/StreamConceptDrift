@@ -1,13 +1,21 @@
 __author__ = 'tegjyot'
 
 import pprint
+from inspect import getmembers
+from sklearn.externals.six import StringIO
+from sklearn import tree
+import pydot
+import src.libs.infra as infra
+
 
 from src.libs import global_constants
 from src.pipelines import feedback_loop_pipeline
+from src.pipelines import continuous_build_pipeline
+
 
 def DashboardLaunch():
     parameters={}
-    parameters['model']={'model_type': 'SVM_LINEAR'}
+    parameters['model']={'model_type': 'SVM_LINEAR'} #SVM_LINEAR
     parameters['metric']='ACCURACY'
 
     parameters['ilds']={}
@@ -34,7 +42,34 @@ def DashboardLaunch():
     pp=pprint.PrettyPrinter()
     pp.pprint(parameters)
 
-    intermediate_model=feedback_loop_pipeline.LaunchPipeline(parameters)
+    intermediate_models=feedback_loop_pipeline.LaunchPipeline(parameters)
+    if parameters['model']['model_type']=='DT':
+        for (model_ts,model) in intermediate_models.items():
+            print 'Attributes for Tree %d' % model_ts
+            with open("temp_results/"+str(model_ts)+".dot", 'w') as dotfile:
+                tree.export_graphviz(model, dotfile)
+
+    if parameters['model']['model_type']=='SVM_LINEAR':
+        print 'Computing angles between the svm and previous one'
+        for (model_ts,model) in sorted(intermediate_models.items()):
+            print model_ts
+            if model_ts==0:
+                prev=list(model.intercept_)
+                prev.extend(model.coef_[0])
+                table_models=[]
+                table_models.append(prev)
+                continue
+            current=list(model.intercept_)
+            current.extend(model.coef_[0])
+            for i,table_model in enumerate(table_models[-1:]):
+                #print prev,current
+                angle=infra.angle(table_model,current)
+                print len(table_models), i, angle
+            print '****'
+            prev=current
+            table_models.append(prev)
+
+
 
 
 if __name__=='__main__':
