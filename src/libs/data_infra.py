@@ -24,6 +24,8 @@ def SplitTrainAndTest(X, Y, train_ratio):
 def TrainModel(X, Y, model_type='SVM_LINEAR'):
     if model_type == 'SVM_LINEAR':
         model = svm.SVC(kernel='linear')
+    elif model_type == 'DT':
+        model=tree.DecisionTreeClassifier(max_depth=5)
     else:
         raise Exception('Invalid Model')
     model.fit(X, Y)

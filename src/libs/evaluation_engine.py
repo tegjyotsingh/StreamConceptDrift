@@ -23,15 +23,18 @@ class Evaluation(object):
             self.running_performance[key].append(kwargs[key])
 
     def returnNumberDrifts(self):
+        if not self.running_performance['drift']:
+            return 0
         return sum(self.running_performance['drift'])
 
     def returnAggregates(self):
         aggregatecounts={}
         for key in self.running_performance:
-            aggregatecounts[key]={}
-            aggregatecounts[key]['mean']=np.mean(self.running_performance[key])
-            aggregatecounts[key]['std']=np.std(self.running_performance[key])
-            aggregatecounts[key]['count']=len(self.running_performance[key])
+            if len(self.running_performance[key])!=0:
+                aggregatecounts[key]={}
+                aggregatecounts[key]['mean']=np.mean(self.running_performance[key])
+                aggregatecounts[key]['std']=np.std(self.running_performance[key])
+                aggregatecounts[key]['count']=len(self.running_performance[key])
         return aggregatecounts
 
     def printSequentialMetrics(self):
@@ -52,6 +55,7 @@ class Evaluation(object):
             if metric is 'drift' and self.returnNumberDrifts()!=0:
                 [plt.axvline(x,color=constants.COLORS[i]) for (x,val) in enumerate(self.running_performance['drift']) if val==1]
             else:
+                X=np.arange(len(self.running_performance[metric]))
                 plt.plot(X,self.running_performance[metric],color=constants.COLORS[i])
             legend.append(metric)
         plt.legend(legend)

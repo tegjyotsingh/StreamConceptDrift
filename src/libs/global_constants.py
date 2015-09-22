@@ -16,7 +16,7 @@ DRIFT_PARAMETERS={
     },
     drift_detection_lib.SimpleAccuracyDriftDetector:{ 'parameters': {
         'DROP_IN_ACCURACY': 0.1,
-        'MIN_SAMPLES': 500 # dependendt on chunk size
+        'MIN_SAMPLES': 200 # dependendt on chunk size
     },
     'retrain_module': retrain_modules.retrain_module_ref_accuracy
     },
